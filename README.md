@@ -1,9 +1,9 @@
-### Real-Time System Monitoring Dashboard Script
+## Real-Time System Monitoring Dashboard Script
 
-## **Overview**
+### **Overview**
 This script provides a real-time monitoring dashboard for various system metrics, including CPU usage, memory usage, network activity, disk space, system load averages, active processes, and service status. It can be run continuously with a configurable refresh interval or specific parts can be called individually using command-line options.
 
- ## **Features**
+ ### **Features**
 
 -  **CPU Usage**: Displays the top 10 applications consuming the most CPU.
 
