@@ -25,7 +25,7 @@ This script provides a real-time monitoring dashboard for various system metrics
 
 -  **Service Monitoring**: Checks the status of essential services like SSH, web server, and firewall services.
 
-**Prerequisites**
+### **Prerequisites**
 The script is designed to run on Unix-like systems (Linux or macOS).
 Ensure you have the necessary permissions to execute system commands like ps, ss, netstat, df, uptime, free, and systemctl.
 
