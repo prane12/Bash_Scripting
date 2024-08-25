@@ -121,10 +121,10 @@ Creates a summary report of the audit and hardening steps, with optional email a
 ### Root Privileges:
 The script must be run as root or with sudo privileges.
 
-## Dependencies:
+### Dependencies:
 mail command (for email alerts), unattended-upgrades, iptables or ufw.
 
-## Usage
+### Usage
 Ensure you have root privileges:
 
 
