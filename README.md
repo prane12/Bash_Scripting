@@ -54,6 +54,7 @@ You can run the script in various modes depending on the monitoring data you wis
 
 ### Examples
 Run the script with a full dashboard:
+
 `./dashboard.sh`
 
 This will run all the monitoring functions in a loop with the default refresh interval.
@@ -61,3 +62,20 @@ This will run all the monitoring functions in a loop with the default refresh in
 ### Run the script to display CPU usage only:
 
 `./dashboard.sh -c`
+
+### Display memory usage and network monitoring information:
+
+`./dashboard.sh -m -n`
+
+### Monitor essential services like SSH and web servers:
+
+`./dashboard.sh -s`
+
+### Show CPU and memory usage details:
+
+`./dashboard.sh -u`
+
+### Configuring the Refresh Interval
+To change the refresh interval, modify the REFRESH_INTERVAL variable at the top of the script:
+
+REFRESH_INTERVAL=10
