@@ -50,3 +50,10 @@ You can run the script in various modes depending on the monitoring data you wis
 - `-u`: **Show CPU usage breakdown and memory usage.**
 - `-s`: **Monitor essential services** (e.g., SSH, web server, firewall).
 - `-a`: **Show the number of active processes** and the top 5 processes by CPU and memory usage.
+
+
+### Examples
+Run the script with a full dashboard:
+```bash
+`./dashboard.sh`
+
