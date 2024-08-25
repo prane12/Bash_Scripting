@@ -19,3 +19,15 @@ This script provides a real-time monitoring dashboard for various system metrics
 **Prerequisites**
 The script is designed to run on Unix-like systems (Linux or macOS).
 Ensure you have the necessary permissions to execute system commands like ps, ss, netstat, df, uptime, free, and systemctl.
+
+
+### Options
+
+- `-c`: **Show top 10 applications by CPU usage.**
+- `-m`: **Show top 10 applications by memory usage.**
+- `-n`: **Show network monitoring information.**
+- `-d`: **Show disk space usage by mounted partitions.**
+- `-l`: **Show system load averages.**
+- `-u`: **Show CPU usage breakdown and memory usage.**
+- `-s`: **Monitor essential services** (e.g., SSH, web server, firewall).
+- `-a`: **Show the number of active processes** and the top 5 processes by CPU and memory usage.
