@@ -34,7 +34,7 @@ Clone the repository or download the script file.
 Make the script executable:
 
 ```bash
-chmod +x dashboard.sh
+`chmod +x dashboard.sh`
 
 ### Usage
 You can run the script in various modes depending on the monitoring data you wish to see. Below are the options available:
