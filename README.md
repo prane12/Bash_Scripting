@@ -32,9 +32,8 @@ Ensure you have the necessary permissions to execute system commands like **ps**
 ### Installation
 Clone the repository or download the script file.
 Make the script executable:
-bash
-Copy code
 
+```bash
 `chmod +x dashboard.sh`
 
 ### Usage
