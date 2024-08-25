@@ -27,7 +27,17 @@ This script provides a real-time monitoring dashboard for various system metrics
 
 ### **Prerequisites**
 The script is designed to run on Unix-like systems (Linux or macOS).
-Ensure you have the necessary permissions to execute system commands like ps, ss, netstat, df, uptime, free, and systemctl.
+Ensure you have the necessary permissions to execute system commands like **ps**, **ss**, **netstat**, **df**, **uptime**, **free**, and **systemctl**.
+
+### Installation
+Clone the repository or download the script file.
+Make the script executable:
+bash
+Copy code
+chmod +x dashboard.sh
+
+### Usage
+You can run the script in various modes depending on the monitoring data you wish to see. Below are the options available:
 
 
 ### Options
