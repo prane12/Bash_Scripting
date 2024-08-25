@@ -5,7 +5,7 @@ This script provides a real-time monitoring dashboard for various system metrics
 
 **Features**
 
-**CPU Usage**: Displays the top 10 applications consuming the most CPU.
+-  **CPU Usage**: Displays the top 10 applications consuming the most CPU.
 
 **Memory Usage**: Displays the top 10 applications consuming the most memory.
 **Network Monitoring**: Shows the number of concurrent connections, packet drops, and data transfer statistics.
