@@ -57,3 +57,10 @@ Run the script with a full dashboard:
 ```bash
 `./dashboard.sh`
 
+This will run all the monitoring functions in a loop with the default refresh interval.
+
+### Run the script to display CPU usage only:
+
+```bash
+Copy code
+./dashboard.sh -c
