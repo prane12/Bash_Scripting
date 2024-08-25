@@ -1,0 +1,352 @@
+#!/bin/bash
+
+# Check if the user has root privileges
+if [[ $EUID -ne 0 ]]; then
+   echo "This script must be run as root or with sudo privileges."
+   exit 1
+fi
+
+# Function to perform User and Group Audits
+user_and_group_audit() {
+    echo "Performing User and Group Audits..."
+
+    # List all users and groups
+    echo "List of all users:"
+    cut -d: -f1 /etc/passwd
+
+    echo -e "\nList of all groups:"
+    cut -d: -f1 /etc/group
+
+    # Check for users with UID 0 (root privileges) and report any non-standard users
+    echo -e "\nUsers with UID 0 (root privileges):"
+    awk -F: '($3 == 0) {print $1}' /etc/passwd
+
+    # Identify and report users without passwords or with weak passwords
+    echo -e "\nUsers without a password:"
+    sudo awk -F: '($2 == "" || $2 == "*" || $2 == "!") {print $1}' /etc/shadow
+
+    echo "User and Group Audit completed."
+}
+
+# Function to perform File and Directory Permission Audits
+file_permission_audit() {
+    echo "Performing File and Directory Permission Audits..."
+
+    # Scan for files and directories with world-writable permissions
+    echo "Files and directories with world-writable permissions:"
+    sudo find / -xdev -type f -perm -o+w -exec ls -ld {} \;
+
+    # Check for the presence of .ssh directories and ensure they have secure permissions
+    echo -e "\nChecking .ssh directory permissions:"
+    sudo find /home -type d -name ".ssh" -exec ls -ld {} \;
+
+    echo -e "\nChecking files in .ssh directories:"
+    sudo find /home -type d -name ".ssh" -exec find {} -type f -exec ls -ld {}  \;
+
+    # Report any files with SUID or SGID bits set, particularly on executables
+    echo -e "\nFiles with SUID or SGID bits set:"
+    sudo find / -xdev \( -perm -4000 -o -perm -2000 \) -type f -exec ls -ld {} \;
+
+    echo "File and Directory Permission Audit completed."
+}
+
+
+# Function to check for unauthorized or unnecessary services
+check_unnecessary_services() {
+    echo -e "\nChecking for unnecessary or unauthorized services:"
+    # Define a list of known unnecessary services (Example: adjust as needed)
+    unnecessary_services=("avahi-daemon" "cups" "bluetooth" "nfs" "rpcbind")
+
+    for service in "${unnecessary_services[@]}"; do
+        if systemctl is-active --quiet "$service" 2>/dev/null; then
+            echo "Warning: Unnecessary service '$service' is running!"
+        fi
+    done
+}
+
+# Function to ensure critical services are running
+check_critical_services() {
+    echo -e "\nEnsuring critical services are running:"
+    critical_services=("sshd" "iptables" "ufw")
+
+    for service in "${critical_services[@]}"; do
+        if ! systemctl is-active --quiet "$service" 2>/dev/null; then
+            echo "Critical service '$service' is NOT running!"
+        else
+            echo "Critical service '$service' is running."
+        fi
+    done
+}
+
+# Function to check services listening on non-standard or insecure ports
+check_services_on_ports() {
+    echo -e "\nChecking services listening on non-standard or insecure ports:"
+    netstat -tuln | awk '{print $4}' | grep -E ':[0-9]+' | while read -r line; do
+        port=$(echo "$line" | awk -F: '{print $NF}')
+        case $port in
+            22|80|443|53)
+                echo "Standard service running on port $port."
+                ;;
+            *)
+                echo "Warning: Service listening on non-standard port $port."
+                ;;
+        esac
+    done
+}
+
+# Function to verify firewall status and configuration
+check_firewall() {
+    echo -e "\nVerifying firewall status and configuration:"
+    if systemctl is-active --quiet ufw 2>/dev/null; then
+        echo "UFW firewall is active."
+        ufw status verbose
+    elif systemctl is-active --quiet iptables 2>/dev/null; then
+        echo "Iptables firewall is active."
+        iptables -L -n -v
+    else
+        echo "Warning: No firewall is active!"
+    fi
+}
+
+# Function to report open ports and their associated services
+report_open_ports() {
+    echo -e "\nReporting open ports and their associated services:"
+    netstat -tuln | grep LISTEN
+}
+
+# Function to check IP forwarding and insecure network configurations
+check_network_security() {
+    echo -e "\nChecking for IP forwarding and insecure network configurations:"
+    ip_forward=$(sysctl net.ipv4.ip_forward | awk '{print $3}')
+    if [ "$ip_forward" -ne 0 ]; then
+        echo "Warning: IP forwarding is enabled!"
+    else
+        echo "IP forwarding is disabled."
+    fi
+}
+
+# Function to determine if an IP is public or private
+check_ip_type() {
+    local ip="$1"
+
+    # Define private IP ranges
+    local private_ip_ranges=("10." "172.16." "172.17." "172.18." "172.19." "172.20." "172.21." "172.22." "172.23." "172.24." "172.25." "172.26." "172.27." "172.28." "172.29." "172.30." "172.31." "192.168.")
+
+    for range in "${private_ip_ranges[@]}"; do
+        if [[ "$ip" == "$range"* ]]; then
+            echo "private"
+            return
+        fi
+    done
+
+    echo "public"
+}
+
+# Function to check failed login attempts
+check_failed_logins() {
+    local LOG_FILE="/var/log/auth.log"
+    local THRESHOLD=5
+
+    # Use grep to find failed login attempts and count them
+    local failed_attempts=$(grep "Failed password" "$LOG_FILE" | wc -l)
+
+    echo "Total failed login attempts: $failed_attempts"
+
+    if [ "$failed_attempts" -ge "$THRESHOLD" ]; then
+        echo "Warning: Suspicious activity detected!"
+        # Optionally, display details of the failed attempts
+        grep "Failed password" "$LOG_FILE"
+    else
+        echo "No suspicious activity detected."
+    fi
+}
+
+# Run all audit functions
+user_and_group_audit
+file_permission_audit
+check_unnecessary_services
+check_critical_services
+check_services_on_ports
+check_firewall
+report_open_ports
+check_network_security
+check_failed_logins
+
+
+
+
+# Function to configure SSH
+configure_ssh() {
+    echo "Configuring SSH..."
+    # Backup current SSH config
+    cp /etc/ssh/ssh_config /etc/ssh/ssh_config.bak
+
+    # Disable password authentication and permit only key-based authentication
+    sed -i 's/^#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/ssh_config
+    sed -i 's/^PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/ssh_config
+    sed -i 's/^#PermitRootLogin yes/PermitRootLogin prohibit-password/' /etc/ssh/ssh_config
+    sed -i 's/^PermitRootLogin yes/PermitRootLogin prohibit-password/' /etc/ssh/ssh_config
+
+    # Restart SSH service to apply changes
+    systemctl restart sshd
+    echo "SSH configuration completed."
+}
+
+# Function to disable IPv6
+disable_ipv6() {
+    echo "Disabling IPv6..."
+    # Backup current sysctl config
+    cp /etc/sysctl.conf /etc/sysctl.conf.bak
+
+    # Disable IPv6
+    echo -e "\n# Disable IPv6\nnet.ipv6.conf.all.disable_ipv6 = 1\nnet.ipv6.conf.default.disable_ipv6 = 1\nnet.ipv6.conf.lo.disable_ipv6 = 1" >> /etc/sysctl.conf
+    sysctl -p
+    echo "IPv6 disabled."
+}
+
+# Function to secure the GRUB bootloader
+secure_grub() {
+    echo "Securing GRUB bootloader..."
+    # Backup current GRUB config
+    cp /etc/default/grub /etc/default/grub.bak
+
+    # Set GRUB password
+    echo "password_pbkdf2 root $(echo -n "$GRUB_PASSWORD" | grub-mkpasswd-pbkdf2 | grep -v '^password_pbkdf2 root' | awk '{print $NF}')" >> /etc/grub.d/40_custom
+
+    # Update GRUB configuration
+    update-grub
+    echo "GRUB bootloader secured."
+}
+
+# Function to configure firewall with iptables
+configure_firewall() {
+    echo "Configuring firewall..."
+    # Clear existing rules
+    iptables -F
+    iptables -X
+
+    # Set default policies
+    iptables -P INPUT DROP
+    iptables -P FORWARD DROP
+    iptables -P OUTPUT ACCEPT
+
+    # Allow loopback interface
+    iptables -A INPUT -i lo -j ACCEPT
+    iptables -A OUTPUT -o lo -j ACCEPT
+
+    # Allow specific ports (example: 22 for SSH)
+    iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+
+    # Ensure the /etc/iptables directory exists
+    if [ ! -d /etc/iptables ]; then
+        echo "Creating /etc/iptables directory..."
+        mkdir -p /etc/iptables
+    fi
+
+    # Save iptables rules
+    iptables-save > /etc/iptables/rules.v4
+    echo "Firewall configured."
+}
+
+# Function to configure unattended-upgrades
+configure_unattended_upgrades() {
+    echo "Configuring unattended-upgrades..."
+   # Install unattended-upgrades if not installed
+     apt-get update
+     apt-get install -y unattended-upgrades
+
+   # Configure unattended-upgrades
+     dpkg-reconfigure --priority=low unattended-upgrades
+
+   # Ensure auto-upgrade package is installed
+     apt-get install -y apt-listchanges
+
+    # Update packages
+     apt-get update
+     apt-get upgrade -y
+
+    echo "Unattended-upgrades configured."
+}
+
+# Function to perform Server Hardening
+server_hardening() {
+    echo "Starting Server Hardening..."
+
+    # Configure SSH
+    configure_ssh
+
+    # Disable IPv6
+    disable_ipv6
+
+    # Secure GRUB bootloader
+    secure_grub
+
+    # Configure firewall with iptables
+    configure_firewall
+
+    # Configure unattended-upgrades
+    configure_unattended_upgrades
+
+    echo "Server Hardening completed."
+}
+
+# Run server hardening functions
+server_hardening
+
+# Function to generate a summary report and send alerts
+generate_report() {
+    echo "Generating summary report..."
+
+    # Create a report file
+    REPORT_FILE="security_audit_report.txt"
+    touch "$REPORT_FILE"
+
+    # Append the output of previous functions to the report
+    {
+        echo "Security Audit and Hardening Report"
+        echo "----------------------------------"
+        echo -e "\nUser and Group Audit:"
+        user_and_group_audit >> "$REPORT_FILE"
+
+        echo -e "\nFile and Directory Permission Audit:"
+        file_permission_audit >> "$REPORT_FILE"
+
+        echo -e "\nUnnecessary Services Check:"
+        check_unnecessary_services >> "$REPORT_FILE"
+
+        echo -e "\nCritical Services Check:"
+        check_critical_services >> "$REPORT_FILE"
+
+        echo -e "\nServices on Non-standard Ports Check:"
+        check_services_on_ports >> "$REPORT_FILE"
+
+        echo -e "\nFirewall Check:"
+        check_firewall >> "$REPORT_FILE"
+
+        echo -e "\nOpen Ports Report:"
+        report_open_ports >> "$REPORT_FILE"
+
+        echo -e "\nNetwork Security Check:"
+        check_network_security >> "$REPORT_FILE"
+
+        echo -e "\nFailed Login Attempts Check:"
+        check_failed_logins >> "$REPORT_FILE"
+
+        echo -e "\nServer Hardening Details:"
+        server_hardening >> "$REPORT_FILE"
+    } > "$REPORT_FILE"
+
+    echo "Summary report generated at $REPORT_FILE."
+
+    # Optional: Send email alert if necessary (configure email settings as needed)
+    if grep -q "Warning" "$REPORT_FILE"; then
+        echo "Sending email alert..."
+        # Example command, adjust to your email settings
+        mail -s "Security Audit Report" pranesh9096@gmail.com < "$REPORT_FILE"
+    fi
+}
+
+# Generate report and send alerts
+generate_report
+
+echo "Script execution completed."
