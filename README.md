@@ -55,7 +55,7 @@ You can run the script in various modes depending on the monitoring data you wis
 ### Examples
 Run the script with a full dashboard:
 ```bash
-`./dashboard.sh`
+`./dashboard.sh```
 
 This will run all the monitoring functions in a loop with the default refresh interval.
 
