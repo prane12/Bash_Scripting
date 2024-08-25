@@ -33,7 +33,6 @@ Ensure you have the necessary permissions to execute system commands like **ps**
 Clone the repository or download the script file.
 Make the script executable:
 
-bash
 `chmod +x dashboard.sh`
 
 ### Usage
@@ -78,4 +77,4 @@ This will run all the monitoring functions in a loop with the default refresh in
 ### Configuring the Refresh Interval
 To change the refresh interval, modify the REFRESH_INTERVAL variable at the top of the script:
 
-REFRESH_INTERVAL=10
+`REFRESH_INTERVAL=10`
