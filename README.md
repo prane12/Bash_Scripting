@@ -78,3 +78,53 @@ This will run all the monitoring functions in a loop with the default refresh in
 To change the refresh interval, modify the REFRESH_INTERVAL variable at the top of the script:
 
 `REFRESH_INTERVAL=10`
+
+
+
+
+
+
+
+
+## Security Audit and Hardening Script
+
+### Overview
+This bash script performs a comprehensive security audit and hardening of a Linux server. It checks various system configurations, permissions, and services to identify potential security issues and ensure best practices. The script also includes functions for configuring SSH, disabling IPv6, securing the GRUB bootloader, and more.
+
+### Features
+### User and Group Audits: 
+Lists all users and groups, checks for users with root privileges, and identifies users without passwords.
+
+### File and Directory Permission Audits:
+Finds files and directories with world-writable permissions, and checks permissions on .ssh directories.
+
+### Service Checks:
+Identifies unnecessary services running, verifies critical services, and checks for services listening on non-standard ports.
+
+### Firewall Configuration:
+Verifies and configures firewall settings with UFW or iptables.
+
+### Network Security:
+Checks IP forwarding and the type of IP addresses (public/private).
+
+### Failed Login Attempts: 
+Reports and alerts on failed login attempts.
+
+### Server Hardening: 
+Configures SSH, disables IPv6, secures GRUB bootloader, and sets up unattended-upgrades.
+
+### Report Generation:
+Creates a summary report of the audit and hardening steps, with optional email alerts for warnings.
+
+## Prerequisites
+
+### Root Privileges:
+The script must be run as root or with sudo privileges.
+
+## Dependencies:
+mail command (for email alerts), unattended-upgrades, iptables or ufw.
+
+## Usage
+Ensure you have root privileges:
+
+
